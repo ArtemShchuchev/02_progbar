@@ -82,11 +82,10 @@ int main(int argc, char** argv)
 	for (auto& t : thrs) t.join();			// запускает все потоки разом
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double, std::milli> delta = end - start;
-	double tm = delta.count();
 
 	conspos.Y += potokNum + 2;
 	setConsolePos(conspos);
-	std::wcout << L"Общее время работы: " << tm << "ms\n"
+	std::wcout << L"Общее время работы: " << delta.count() << "ms\n"
 		<< "i count: " << i << "\n"
 		<< "ii count: " << ii << "\n\n";
 
