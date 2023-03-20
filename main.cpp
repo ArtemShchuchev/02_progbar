@@ -13,12 +13,9 @@
 • Номер потока по порядку;
 • Идентификатор потока;
 • Заполняющийся индикатор (наподобие прогресс-бара) визуализирующий процесс «расчёта»;
-• По завершении работы каждого потока в соответствующей строке выводить
-  суммарное время, затраченное при работке потока.
+• По завершении работы каждого потока в соответствующей строке выводить суммарное
+  время, затраченное при работке потока.
 */
-
-COORD GetConsoleCursorPosition();
-void consolePos(const COORD);
 
 std::atomic<long long> i = 1;
 std::atomic<long long> ii = 2;
@@ -31,7 +28,7 @@ void funk(const int dataLen, const int pot)
 	m.lock();
 	std::wcout << L"\nПоток: " << pot << "  id: "
 		<< std::this_thread::get_id << " [          ]";
-	COORD conspos = GetConsoleCursorPosition();
+	COORD conspos = getConsolePos();
 	m.unlock();
 	
 	conspos.X -= 11;
@@ -46,7 +43,7 @@ void funk(const int dataLen, const int pot)
 		if (!(q % lenDivTen))
 		{
 			m.lock();
-			consolePos(conspos);
+			setConsolePos(conspos);
 			std::wcout << "x";
 			m.unlock();
 			
@@ -61,13 +58,13 @@ void funk(const int dataLen, const int pot)
 	conspos.X += 3;
 
 	std::lock_guard<std::mutex> grd(m);
-	consolePos(conspos);
+	setConsolePos(conspos);
 	std::wcout << L"Время потока: " << tm << "ms";
 }
 
 int main(int argc, char** argv)
 {
-	printHeader(L"Параллельные вычисления");
+	printHeader(L"Прогресс бар");
 
 	const int potokNum(5);					// кол-во потоков
 	std::array<std::thread, potokNum> thrs;	// сами потоки
@@ -78,7 +75,7 @@ int main(int argc, char** argv)
 		<< L"Количество потоков: " << potokNum << "\n"
 		<< L"Длина расчета: " << dataLen << "\n";
 	
-	COORD conspos = GetConsoleCursorPosition();
+	COORD conspos = getConsolePos();
 	int pot(0);
 	auto start = std::chrono::steady_clock::now();
 	for (auto& t : thrs) t = std::thread(funk, dataLen, ++pot);
@@ -88,33 +85,10 @@ int main(int argc, char** argv)
 	double tm = delta.count();
 
 	conspos.Y += potokNum + 2;
-	consolePos(conspos);
+	setConsolePos(conspos);
 	std::wcout << L"Общее время работы: " << tm << "ms\n"
 		<< "i count: " << i << "\n"
 		<< "ii count: " << ii << "\n\n";
 
 	return 0;
-}
-
-
-
-
-COORD GetConsoleCursorPosition()
-{
-	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO cbsi;
-	if (GetConsoleScreenBufferInfo(hConsoleOutput, &cbsi))
-	{
-		return cbsi.dwCursorPosition;
-	}
-	else
-	{
-		// The function failed. Call GetLastError() for details.
-		COORD invalid = { 0, 0 };
-		return invalid;
-	}
-}
-void consolePos(const COORD coord)
-{
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }

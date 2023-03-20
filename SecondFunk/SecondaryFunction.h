@@ -84,7 +84,13 @@ namespace col
 #endif
 
 // цвет в консоли
-DYNAMIC_API void consoleCol(COLOR);
+DYNAMIC_API void setConsoleCol(COLOR);
+
+// получение текущего положения курсора
+DYNAMIC_API COORD getConsolePos();
+
+// установка положения курсора
+DYNAMIC_API void setConsolePos(const COORD);
 
 // заголовок
 DYNAMIC_API void printHeader(const std::wstring&);
