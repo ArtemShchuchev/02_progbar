@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 {
 	printHeader(L"Прогресс бар");
 
-	const int potokNum(5);					// кол-во потоков
+	const int potokNum(7);					// кол-во потоков
 	std::array<std::thread, potokNum> thrs;	// сами потоки
 	const int dataLen(10000000);			// длина данных для расчетов
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 	int pot(0);
 	auto start = std::chrono::steady_clock::now();
 	for (auto& t : thrs) t = std::thread(funk, dataLen, ++pot);
-	for (auto& t : thrs) t.join();			// запускает все потоки разом
+	for (auto& t : thrs) t.join();			// ждет окончания join потоков
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double, std::milli> delta = end - start;
 
