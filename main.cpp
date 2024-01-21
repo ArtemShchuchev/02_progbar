@@ -19,48 +19,9 @@
 
 std::atomic<long long> i = 1;
 std::atomic<long long> ii = 2;
-//long long i = 1;
-//long long ii = 2;
-std::mutex m;
+std::mutex ioMutex;
 	
-void funk(const int dataLen, const int pot)
-{
-	m.lock();
-	std::wcout << L"\nПоток: " << pot << "  id: "
-		<< std::this_thread::get_id << " [          ]";
-	COORD conspos = getConsolePos();
-	m.unlock();
-	
-	conspos.X -= 11;
-	int lenDivTen = dataLen / 10;
-
-	auto start = std::chrono::steady_clock::now();
-	for (int q = 0; q < dataLen; ++q)
-	{
-		++i;
-		--i;
-		++ii;
-		if (!(q % lenDivTen))
-		{
-			m.lock();
-			setConsolePos(conspos);
-			std::wcout << "x";
-			m.unlock();
-			
-			++conspos.X;
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		}
-
-	}
-	auto end = std::chrono::steady_clock::now();
-	std::chrono::duration<double, std::milli> delta = end - start;
-	double tm = delta.count();
-	conspos.X += 3;
-
-	std::lock_guard<std::mutex> grd(m);
-	setConsolePos(conspos);
-	std::wcout << L"Время потока: " << tm << "ms";
-}
+static void funk(const int dataLen, const int pot);
 
 int main(int argc, char** argv)
 {
@@ -70,6 +31,7 @@ int main(int argc, char** argv)
 	std::array<std::thread, potokNum> thrs;	// сами потоки
 	const int dataLen(10000000);			// длина данных для расчетов
 
+	std::wcout << L"Номер потока main: " << std::this_thread::get_id() << "\n";
 	std::wcout << std::left << L"Количество аппаратных ядер: "
 		<< std::thread::hardware_concurrency() << "\n\n"
 		<< L"Количество потоков: " << potokNum << "\n"
@@ -90,4 +52,43 @@ int main(int argc, char** argv)
 		<< "ii count: " << ii << "\n\n";
 
 	return 0;
+}
+
+static void funk(const int dataLen, const int pot)
+{
+	ioMutex.lock();
+	std::wcout << L"\nПоток: " << pot << "  id: " << std::this_thread::get_id();
+	COORD conspos = getConsolePos();
+	conspos.X = 21;
+	setConsolePos(conspos);
+	std::wcout << "[          ]";
+	ioMutex.unlock();
+
+	const int lenDivTen = dataLen / 10;
+	const auto start = std::chrono::steady_clock::now();
+	for (int q = 0; q < dataLen; ++q)
+	{
+		++i;
+		--i;
+		++ii;
+		if (!(q % lenDivTen))
+		{
+			++conspos.X;
+
+			ioMutex.lock();
+			setConsolePos(conspos);
+			std::wcout << "x";
+			ioMutex.unlock();
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+	}
+	const auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double, std::milli> delta = end - start;
+	const double tm = delta.count();
+	conspos.X += 4;
+
+	std::lock_guard<std::mutex> grd(ioMutex);
+	setConsolePos(conspos);
+	std::wcout << L"Время потока: " << tm << "ms";
 }
